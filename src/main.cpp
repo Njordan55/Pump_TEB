@@ -26,7 +26,7 @@ uint32_t pumpTiming_strong_alcohol[] = {2000, 1000, 1500, 2000};
 uint32_t totalTime = 0;
 
 uint32_t now = 0;
-uint32_t targetTime_pump[] = {0, 0, 0, 0}; // // Target timer for {PUMP_A, PUMP_B, PUMP_C, PUMP_D}
+uint32_t targetTime_pump[] = {500, 1000, 1500, 2000}; // // Target timer for {PUMP_A, PUMP_B, PUMP_C, PUMP_D}
 bool riched[] = {false, false, false, false};
 
 void buttonthreat(uint8_t button);
