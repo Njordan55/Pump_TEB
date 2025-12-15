@@ -2,6 +2,14 @@
 #include "KeysDebounce.h"
 #include "BusIn.h"
 
+// Basic Pump timing definitions (in milliseconds) for different liquids
+// LIQUID_A and etc and (...) are placeholders; replace with actual liquid names as needed
+// The Pumping times is adjusted according to the time needed to pump 100 ml of each liquid
+#define PUMP_TIME_ALCOHOL 500 // Pumping time for alcohol in milliseconds
+#define PUMP_TIME_LIQUID_A 1500 // Pumping time for (...) in milliseconds
+#define PUMP_TIME_LIQUID_B 2000 // Pumping time for (...) in milliseconds
+#define PUMP_TIME_LIQUID_C 2500 // Pumping time for (...) in milliseconds
+
 // Create a BusIn for option buttons (example: 4 option buttons)
 const uint8_t optionPins[] = { BUTTON_OPT_1, BUTTON_OPT_2, BUTTON_OPT_3, BUTTON_OPT_4, BUTTON_STOP };
 const size_t counter = sizeof(optionPins) / sizeof(optionPins[0]);
@@ -19,10 +27,12 @@ bool pumpState = false;
 // pointer to the currently selected timing array for pumps
 uint32_t *pump_timer = nullptr; // will point to one of the pumpTiming_* arrays
 uint32_t pumpTimer_stop[] = {0, 0, 0, 0};
-uint32_t pumpTiming_no_alcohol[] =     {0, 1000, 1500, 2000};
-uint32_t pumpTiming_light_alcohol[] =  {500, 1000, 1500, 2000};
-uint32_t pumpTiming_medium_alcohol[] = {1000, 1000, 1500, 2000};
-uint32_t pumpTiming_strong_alcohol[] = {2000, 1000, 1500, 2000};
+int current_option = 0;
+int pumping_factor[4] = {0, 1, 2, 3}; // factor to adjust pumping times {no alcohol, light, medium, strong}
+uint32_t pumpTiming_no_alcohol[] =     {pumping_factor[0] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
+uint32_t pumpTiming_light_alcohol[] =  {pumping_factor[1] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
+uint32_t pumpTiming_medium_alcohol[] = {pumping_factor[2] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
+uint32_t pumpTiming_strong_alcohol[] = {pumping_factor[3] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
 uint32_t totalTime = 0;
 
 uint32_t now = 0;

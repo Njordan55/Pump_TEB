@@ -3,7 +3,3 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
-cd /Users/nlpjordan/Documents/PlatformIO/Projects/Pump_TEB
-git init
-git add .
-git commit -m "Initial commit"
