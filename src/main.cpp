@@ -22,26 +22,35 @@ uint8_t newInput = 0;
 uint8_t previousInput = 0;
 uint8_t buttonPushed = 0;
 // Track pump/LED state and toggle on each button press
-bool pumpState = false;
+bool pumpState[4] = {false, false, false, false};
 
 // pointer to the currently selected timing array for pumps
 uint32_t *pump_timer = nullptr; // will point to one of the pumpTiming_* arrays
 uint32_t pumpTimer_stop[] = {0, 0, 0, 0};
+uint32_t ledTime = 0;
 int current_option = 0;
-int pumping_factor[4] = {0, 1, 2, 3}; // factor to adjust pumping times {no alcohol, light, medium, strong}
+uint32_t pumping_factor[4] = {0, 1, 2, 3}; // factor to adjust pumping times {no alcohol, light, medium, strong}
 uint32_t pumpTiming_no_alcohol[] =     {pumping_factor[0] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
 uint32_t pumpTiming_light_alcohol[] =  {pumping_factor[1] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
 uint32_t pumpTiming_medium_alcohol[] = {pumping_factor[2] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
 uint32_t pumpTiming_strong_alcohol[] = {pumping_factor[3] * PUMP_TIME_ALCOHOL, PUMP_TIME_LIQUID_A, PUMP_TIME_LIQUID_B, PUMP_TIME_LIQUID_C};
 uint32_t totalTime = 0;
+uint32_t ledFreq[] = {0, 1000, 500, 100, 0}; // LED status for {no alcohol, light, medium, strong, stop}
 
 uint32_t now = 0;
-uint32_t targetTime_pump[] = {500, 1000, 1500, 2000}; // // Target timer for {PUMP_A, PUMP_B, PUMP_C, PUMP_D}
+uint32_t targetTime_pump[] = {0, 0, 0, 0}; // // Target timer for {PUMP_A, PUMP_B, PUMP_C, PUMP_D}
+uint32_t targetTime_led = 0;
 bool riched[] = {false, false, false, false};
 
 void buttonthreat(uint8_t button);
 void timerUpdate();
-void timeReached();
+bool timeReached_led();
+void timeReached_pump();
+
+
+void stop_All_Pumps();
+void status_Led(uint8_t option_Drink);
+void pumpState_onLed();
 
 void setup() {
   pinMode(PUMP_A, OUTPUT);
@@ -66,17 +75,17 @@ void loop() {
   now = millis();
 
   // Detect rising edges for the bus: bits that went from 0 -> 1
-  uint8_t rising = (~previousInput) & newInput;
-  buttonPushed = rising; // mask of buttons newly pressed
-  buttonthreat(buttonPushed);
-  timerUpdate();
-  timeReached();
+  buttonPushed = (~previousInput) & newInput;
+  if (buttonPushed != 0){
+    buttonthreat(buttonPushed);
+    timerUpdate();
+  }
 
   // Drive outputs based on pumpState
-  digitalWrite(PUMP_A, pumpState ? HIGH : LOW);
-  digitalWrite(PUMP_B, pumpState ? HIGH : LOW);
-  digitalWrite(PUMP_C, pumpState ? HIGH : LOW);
-  digitalWrite(PUMP_D, pumpState ? HIGH : LOW);
+  digitalWrite(PUMP_A, pumpState[0] ? HIGH : LOW);
+  digitalWrite(PUMP_B, pumpState[1] ? HIGH : LOW);
+  digitalWrite(PUMP_C, pumpState[2] ? HIGH : LOW);
+  digitalWrite(PUMP_D, pumpState[3] ? HIGH : LOW);
 
   previousInput = newInput;
 }
@@ -85,18 +94,28 @@ void buttonthreat(uint8_t button){
   switch(button){
     case 1:
       pump_timer = pumpTiming_no_alcohol;
+      ledTime = ledFreq[0];
+      current_option = 1;
     break;
     case 2:
       pump_timer = pumpTiming_light_alcohol;
+      ledTime = ledFreq[1];
+      current_option = 2;
     break;
     case 4:
       pump_timer = pumpTiming_medium_alcohol;
+      ledTime = ledFreq[2];
+      current_option = 3;
     break;
     case 8:
       pump_timer = pumpTiming_strong_alcohol;
+      ledTime = ledFreq[3];
+      current_option = 4;
     break;
     case 16:
       pump_timer = pumpTimer_stop;
+      ledTime = ledFreq[4];
+      current_option = 0;
     break;
     default:
     break;
@@ -110,8 +129,87 @@ void timerUpdate(){
   }
 }
 
-void timeReached(){
+void timeReached_pump(){
   for (int i = 0; i < 4; i++){
-    riched[i] = (now >= targetTime_pump[i]);
+    if (riched[i] == false && now >= targetTime_pump[i]){
+      riched[i] = true;
+      // Stop the pump
+      switch(i){
+        case 0:
+          digitalWrite(PUMP_A, LOW);
+        break;
+        case 1:
+          digitalWrite(PUMP_B, LOW);
+        break;
+        case 2:
+          digitalWrite(PUMP_C, LOW);
+        break;
+        case 3:
+          digitalWrite(PUMP_D, LOW);
+        break;
+        default:
+        break;
+      }
+    }
+  }
+
+  // Check if all pumps have reached their target time
+  if (riched[0] && riched[1] && riched[2] && riched[3]){
+    // Reset for next operation
+    for (int i = 0; i < 4; i++){
+      riched[i] = false;
+    }
+    pump_timer = nullptr; // Clear the pump timer pointer
+  }
+}
+
+bool timeReached_led(){
+  if (now >= targetTime_led){
+    targetTime_led = now + ledTime; // update next target time
+    return true;
+  }else{
+    return false;
+  }
+}
+
+
+void stop_All_Pumps(){
+  for (int i = 0; i < 4; i++){
+    targetTime_pump[i] = now; // set all target times to now to stop pumps
+  }
+}
+
+void status_Led(uint8_t option_Drink){
+  switch(option_Drink){
+    case 0:
+      digitalWrite(RED, LOW); // LED off
+    break;
+    case 1:
+      digitalWrite(RED, HIGH); // LED on
+    break;
+    case 2:
+      // Blink LED
+      if ((now / 500) % 2 == 0){
+        digitalWrite(RED, HIGH);
+      } else {
+        digitalWrite(RED, LOW);
+      }
+    break;
+    default:
+      digitalWrite(RED, LOW); // LED off
+    break;
+  }
+}
+
+void pumpState_onLed(uint32_t blinky){
+  if (blinky == 0){
+    digitalWrite(RED, LOW); // LED off
+  } else {
+    // Blink LED
+    if ((now / blinky) % 2 == 0){
+      digitalWrite(RED, HIGH);
+    } else {
+      digitalWrite(RED, LOW);
+    }
   }
 }
