@@ -42,7 +42,7 @@ uint32_t targetTime_pump[] = {0, 0, 0, 0}; // // Target timer for {PUMP_A, PUMP_
 uint32_t targetTime_led = 0;
 bool riched[] = {false, false, false, false};
 
-void buttonthreat(uint8_t button);
+void buttonUse(uint8_t button);
 void timerUpdate();
 bool timeReached_led();
 void timeReached_pump();
@@ -51,6 +51,7 @@ void timeReached_pump();
 void stop_All_Pumps();
 void status_Led(uint8_t option_Drink);
 void pumpState_onLed();
+void setPumpState(int option);
 
 void setup() {
   pinMode(PUMP_A, OUTPUT);
@@ -77,10 +78,16 @@ void loop() {
   // Detect rising edges for the bus: bits that went from 0 -> 1
   buttonPushed = (~previousInput) & newInput;
   if (buttonPushed != 0){
-    buttonthreat(buttonPushed);
+    buttonUse(buttonPushed);
     timerUpdate();
   }
 
+  if (current_option != 0){
+    timeReached_pump();
+  }
+
+ digitalWrite(RED, timeReached_led()); // Turn off LED by default
+  
   // Drive outputs based on pumpState
   digitalWrite(PUMP_A, pumpState[0] ? HIGH : LOW);
   digitalWrite(PUMP_B, pumpState[1] ? HIGH : LOW);
@@ -90,38 +97,73 @@ void loop() {
   previousInput = newInput;
 }
 
-void buttonthreat(uint8_t button){
+void buttonUse(uint8_t button){
   switch(button){
     case 1:
       pump_timer = pumpTiming_no_alcohol;
       ledTime = ledFreq[0];
       current_option = 1;
+      setPumpState(current_option);
     break;
     case 2:
       pump_timer = pumpTiming_light_alcohol;
       ledTime = ledFreq[1];
       current_option = 2;
+      setPumpState(current_option);
     break;
     case 4:
       pump_timer = pumpTiming_medium_alcohol;
       ledTime = ledFreq[2];
       current_option = 3;
+      setPumpState(current_option);
     break;
     case 8:
       pump_timer = pumpTiming_strong_alcohol;
       ledTime = ledFreq[3];
       current_option = 4;
+      setPumpState(current_option);
     break;
     case 16:
       pump_timer = pumpTimer_stop;
       ledTime = ledFreq[4];
       current_option = 0;
+      stop_All_Pumps();
     break;
     default:
     break;
   }
 }
 
+void setPumpState(int option){
+  switch(option){
+    case 1:
+      pumpState[0] = false; // Start Pump A
+      pumpState[1] = true; // Start Pump B
+      pumpState[2] = true; // Start Pump C
+      pumpState[3] = true; // Start Pump D
+    break;
+    case 2:
+      pumpState[0] = true; // Start Pump A
+      pumpState[1] = true; // Start Pump B
+      pumpState[2] = true; // Start Pump C
+      pumpState[3] = true; // Start Pump D
+    break;
+    case 3:
+      pumpState[0] = true; // Start Pump A
+      pumpState[1] = true; // Start Pump B
+      pumpState[2] = true; // Start Pump C
+      pumpState[3] = true; // Start Pump D
+    break;
+    case 4:
+      pumpState[0] = true; // Start Pump A
+      pumpState[1] = true; // Start Pump B
+      pumpState[2] = true; // Start Pump C
+      pumpState[3] = true; // Start Pump D
+    break;
+    default:
+    break;
+  }
+}
 void timerUpdate(){
   if (pump_timer == nullptr) return;
   for (int i = 0; i < 4; i++){
@@ -136,16 +178,16 @@ void timeReached_pump(){
       // Stop the pump
       switch(i){
         case 0:
-          digitalWrite(PUMP_A, LOW);
+          pumpState[0] = false;
         break;
         case 1:
-          digitalWrite(PUMP_B, LOW);
+          pumpState[1] = false;
         break;
         case 2:
-          digitalWrite(PUMP_C, LOW);
+          pumpState[2] = false;
         break;
         case 3:
-          digitalWrite(PUMP_D, LOW);
+          pumpState[3] = false;
         break;
         default:
         break;
