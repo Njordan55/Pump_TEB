@@ -27,6 +27,7 @@ uint32_t now = 0;
 uint32_t pumptimer = 0;
 
 void LED_togle(uint8_t ledPin);
+void pump_togle(uint8_t pumpPin);
 
 void setup() {
   // Initial PinMode configurations for LEDs
@@ -65,12 +66,15 @@ void loop() {
     switch(buttonPushed){
       case 0x01: // BUTTON_OPT_1 pressed
         LED_togle(GREEN);
+        pump_togle(PUMP_A);
         break;
       case 0x02: // BUTTON_OPT_2 pressed
         LED_togle(YELLOW);
+        pump_togle(PUMP_B);
         break;
       case 0x04: // BUTTON_OPT_3 pressed
         LED_togle(BLUE);
+        pump_togle(PUMP_C);
         break;
       case 0x08: // BUTTON_OPT_4 pressed
         LED_togle(RED);
@@ -90,6 +94,14 @@ void loop() {
 }
 
 void LED_togle(uint8_t ledPin){
-  uint8_t currentState = digitalRead(ledPin);
+  bool currentState = digitalRead(ledPin);
   digitalWrite(ledPin, !currentState);
+}
+
+void pump_togle(uint8_t pumpPin){
+  bool currentState = digitalRead(pumpPin);
+  digitalWrite(pumpPin, !currentState);
+}
+void timePumping(){
+
 }
