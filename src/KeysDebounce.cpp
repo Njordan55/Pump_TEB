@@ -22,7 +22,7 @@ uint8_t KeysDebounce::read(){
     m_lastChangeTime = -1;
   }
 
-  int newInputValue = m_busIn->read();
+  uint8_t newInputValue = m_busIn->read();
   if(newInputValue != m_previousInput){
     m_lastChangeTime = millis();
     m_previousInput = newInputValue;
