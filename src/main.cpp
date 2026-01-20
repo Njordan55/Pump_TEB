@@ -38,7 +38,7 @@ void loop() {
     for (uint8_t i = 0; i < (counter-1); i++){
       if(buttonPushed & (1 << i)){
         pumpingOption = i + 1;
-        break;
+        break; 
       }
     }
     factor = pumpingOption - 1; // 0 = no alcohol, 1 = low, 2 = medium, 3 = high
