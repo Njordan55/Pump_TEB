@@ -2,7 +2,7 @@
 
 void outputPinsState();
 void outputPinsModus();
-void LED_togle(uint8_t ledPin);
+void LED_togle(uint8_t option);
 void pump_togle(uint8_t pumpPin);
 // Recompute derived timing values when 'factor' changes
 void updatePumpTiming();
@@ -43,6 +43,7 @@ void loop() {
     }
     factor = pumpingOption - 1; // 0 = no alcohol, 1 = low, 2 = medium, 3 = high
     updatePumpTiming();         // refresh timing values based on new factor
+    LED_togle(pumpingOption);
   }
 
   if (pumpingOption != 0){
@@ -92,9 +93,12 @@ void loop() {
   previousInput = newInput;
 }
 
-void LED_togle(uint8_t ledPin){
-  bool currentState = digitalRead(ledPin);
-  digitalWrite(ledPin, !currentState);
+void LED_togle(uint8_t option){
+  bool currentState = false;
+  for (uint8_t i = 0; i < option; i++){
+    currentState = digitalRead(ledPin[i]);
+    digitalWrite(ledPin[i] , !currentState);
+  }
 }
 
 void pump_togle(uint8_t pumpPin){

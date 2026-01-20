@@ -20,6 +20,11 @@
 #define PUMP_TIME_LIQUID_A 1500 // Pumping time for (...) in milliseconds
 #define PUMP_TIME_LIQUID_B 2000 // Pumping time for (...) in milliseconds
 
+// LEDs pin array for easier management
+const uint8_t ledPin [] = { GREEN, YELLOW, BLUE, RED };
+const size_t ledPinCount = sizeof(ledPin) / sizeof(ledPin[0]);
+
+// Pumps pin array for easier management
 const uint8_t pumpPin [] = { PUMP_A, PUMP_B, PUMP_C };
 const size_t pumpPinCount = sizeof(pumpPin) / sizeof(pumpPin[0]);
 uint8_t counter = 0;
@@ -31,6 +36,7 @@ uint8_t lastCounter = -1;
 const uint8_t optionPins[] = { BUTTON_OPT_1, BUTTON_OPT_2, BUTTON_OPT_3, 
                                 BUTTON_OPT_4, BUTTON_STOP };
 const size_t optionPinsCount = sizeof(optionPins) / sizeof(optionPins[0]);
+
 // usePullup = false because you said you use external resistors
 // BusIn expects a small integer count; cast to uint8_t
 BusIn keys(optionPins, (uint8_t)optionPinsCount, true);
