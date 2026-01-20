@@ -25,7 +25,6 @@
 #define BUTTON_OPT_2 5  // Drink 2. mixture selection button for light alcoholic drink
 #define BUTTON_OPT_3 4  // Drink 3. mixture selection button for medium alcoholic drink
 #define BUTTON_OPT_4 3  // Drink 4. mixture selection button for strong alcoholic drink
-// #define BUTTON_START 5  // Start button to begin mixing after Option chosed
 #define BUTTON_STOP 2   // Stop button any process and come back to initial (chosing)
 
 
