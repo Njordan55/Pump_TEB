@@ -1,146 +1,204 @@
 #include "Parameter.h"
 
-void outputPinsState();
-void outputPinsModus();
-void LED_togle(uint8_t option);
-void pump_togle(uint8_t pumpPin);
-// Recompute derived timing values when 'factor' changes
-void updatePumpTiming();
-void timer_to_zero();
+static void outputPinsState();
+static void outputPinsModus();
 
+static void setIndicatorLED(uint8_t option);
+static void allLEDsOff();
+
+static void pump_on(uint8_t pin);
+static void pump_off(uint8_t pin);
+
+static void updatePumpTiming();
+static void timer_to_zero();
+static void emergencyStopAndReset();
 
 void setup() {
-  // Set pin modes for output pins
   outputPinsModus();
-
-  // Initialize output pins to known state
   outputPinsState();
-
-  // Configure input pins for the key bus (keys.begin() sets INPUT or INPUT_PULLUP
-  // depending on how the BusIn was constructed).
   keys.begin();
 }
 
 void loop() {
-  // Use the debounced read (returns a bitmask for the bus)
   newInput = buttonDebounce.read();
   now = millis();
 
-  // Detect rising edges for the bus: bits that went from 0 -> 1
+  // Rising edges: 0 -> 1
   buttonPushed = (~previousInput) & newInput;
-  if (buttonPushed && !buttonFlag){
+
+  // STOP has highest priority (it's the LAST pin in optionPins[])
+  const uint8_t STOP_BIT = (uint8_t)(optionPinsCount - 1);
+  if (buttonPushed & (1 << STOP_BIT)) {
+    emergencyStopAndReset();
+    previousInput = newInput;
+    return;
+  }
+
+  if (buttonPushed && !buttonFlag) {
     buttonFlag = true;
   }
-  //  pumptimer = now + PUMP_TIME_LIQUID_B;
-  //  digitalWrite(PUMP_A, HIGH);
 
-  if (buttonFlag && (pumpingOption == 0)){
-    for (uint8_t i = 0; i < (counter-1); i++){
-      if(buttonPushed & (1 << i)){
-        pumpingOption = i + 1;
-        break; 
+  // Select option (only when idle)
+  if (buttonFlag && (pumpingOption == 0)) {
+    // Only option buttons 1..4 (exclude STOP)
+    for (uint8_t i = 0; i < 4; i++) {
+      if (buttonPushed & (1 << i)) {
+        pumpingOption = i + 1; // 1..4
+        break;
       }
     }
-    factor = pumpingOption - 1; // 0 = no alcohol, 1 = low, 2 = medium, 3 = high
-    updatePumpTiming();         // refresh timing values based on new factor
-    LED_togle(pumpingOption);
+
+    if (pumpingOption != 0) {
+      updatePumpTiming();
+      setIndicatorLED(pumpingOption);
+    } else {
+      // No valid option was pressed
+      buttonFlag = false;
+    }
   }
 
-  if (pumpingOption != 0){
-    if (counter != lastCounter){
-      pumptimer = now + pumpTiming[counter];
-      lastCounter = counter;
-      switch (counter){
-        case 0:
-          pump_togle(pumpPin[counter]);
-        break;
-        case 1:
-          pump_togle(pumpPin[counter]);
-        break;
-        case 2:
-          pump_togle(pumpPin[counter]);
-        break;
-      }
-    }
-    if (now >= pumptimer){
-      switch(counter){
-        case 0:
-          pump_togle(pumpPin[counter]);
-        break;
-        case 1:
-          pump_togle(pumpPin[counter]);
-        break;
-        case 2:
-          pump_togle(pumpPin[counter]);
-        break;
-      }
+  // Run pump sequence
+  if (pumpingOption != 0) {
+
+    // Skip pumps with 0ms runtime
+    while (counter < timeCounter && pumpTiming[counter] == 0) {
       counter++;
+      lastCounter = -1;
+    }
+
+    if (counter < timeCounter) {
+      // Start the step once
+      if ((int8_t)counter != lastCounter) {
+        pumptimer = now + pumpTiming[counter];
+        lastCounter = (int8_t)counter;
+        pump_on(pumpPin[counter]);
+      }
+
+      // Finish step
+      if (now >= pumptimer) {
+        pump_off(pumpPin[counter]);
+        counter++;
+        lastCounter = -1; // force next step start
+      }
     }
   }
-  if (counter >= timeCounter){
-    pumpingOption = 0;
-    counter = 0;
-    buttonFlag = false;
-    lastCounter = -1;
-    timer_to_zero();
+
+  // Done?
+  if (counter >= timeCounter) {
+    emergencyStopAndReset(); // turns off pumps + resets state + LEDs off
   }
-
-
-//  if (now >= pumptimer){
-//  digitalWrite(PUMP_A, LOW);
-//  }
 
   previousInput = newInput;
 }
 
-void LED_togle(uint8_t option){
-  bool currentState = false;
-  for (uint8_t i = 0; i < option; i++){
-    currentState = digitalRead(ledPin[i]);
-    digitalWrite(ledPin[i] , !currentState);
+// ------------------------- LED helpers -------------------------
+
+static void allLEDsOff() {
+  for (size_t i = 0; i < ledPinCount; i++) {
+    digitalWrite(ledPin[i], LOW);
   }
 }
 
-void pump_togle(uint8_t pumpPin){
-  bool currentState = digitalRead(pumpPin);
-  digitalWrite(pumpPin, !currentState);
+static void setIndicatorLED(uint8_t option) {
+  // Show only ONE LED depending on option
+  allLEDsOff();
+  if (option >= 1 && option <= 4) {
+    digitalWrite(ledPin[option - 1], HIGH);
+  }
 }
 
-void outputPinsModus(){
-    // Initial PinMode configurations for LEDs
+// ------------------------- Pump helpers -------------------------
+
+static void pump_on(uint8_t pin) {
+  digitalWrite(pin, HIGH);
+}
+
+static void pump_off(uint8_t pin) {
+  digitalWrite(pin, LOW);
+}
+
+// ------------------------- IO setup -------------------------
+
+static void outputPinsModus() {
+  // LEDs
   pinMode(GREEN, OUTPUT);
   pinMode(YELLOW, OUTPUT);
   pinMode(BLUE, OUTPUT);
   pinMode(RED, OUTPUT);
 
-  // Initial PinMode configurations for PUMOs
+  // Pumps
   pinMode(PUMP_A, OUTPUT);
   pinMode(PUMP_B, OUTPUT);
   pinMode(PUMP_C, OUTPUT);
-}
-void outputPinsState(){
-  // Set initial states for LEDs (all off)
-  digitalWrite(RED, LOW);
-  digitalWrite(BLUE, LOW);
-  digitalWrite(YELLOW, LOW);
-  digitalWrite(GREEN, LOW);
-
-  // Set initial states for PUMPs (all off)
-  digitalWrite(PUMP_A, LOW); // Turn off pump (assuming HIGH is on)
-  digitalWrite(PUMP_B, LOW); // Turn off pump (assuming HIGH is on)
-  digitalWrite(PUMP_C, LOW); // Turn off pump (assuming HIGH is on)
+  pinMode(PUMP_D, OUTPUT);
 }
 
-// Recompute derived timing values when 'factor' changes
-void updatePumpTiming(){
-  pumpTiming[0] = PUMP_TIME_ALCOHOL * factor; // Alcohol time adjusted by factor
-  pumpTiming[1] = PUMP_TIME_LIQUID_A;         // Liquid A time
-  pumpTiming[2] = PUMP_TIME_LIQUID_B;         // Liquid B time
+static void outputPinsState() {
+  allLEDsOff();
+
+  pump_off(PUMP_A);
+  pump_off(PUMP_B);
+  pump_off(PUMP_C);
+  pump_off(PUMP_D);
 }
 
-void timer_to_zero(){
+// ------------------------- Timing logic -------------------------
+
+static void updatePumpTiming() {
+
+  // Default: always dispense Liquid A and Liquid B
+  pumpTiming[0] = PUMP_TIME_LIQUID_A;  // Pumping time for Liquid A in milliseconds
+  pumpTiming[1] = PUMP_TIME_LIQUID_B;  // Pumping time for Liquid B in milliseconds
+
+  // Default: no alcohol
+  pumpTiming[2] = 0; // Pumping time for alcohol in milliseconds
+  pumpTiming[3] = 0; // Pumping time for strong alcohol in milliseconds
+
+  switch (pumpingOption) {
+
+    case 1: // Drink 1. non alcoholic drink
+      // Only Liquid A and Liquid B
+      break;
+
+    case 2: // Drink 2. light alcoholic drink
+      pumpTiming[2] = PUMP_TIME_ALCOHOL; // small amount of alcohol
+      break;
+
+    case 3: // Drink 3. medium alcoholic drink
+      pumpTiming[2] = PUMP_TIME_ALCOHOL * 2; // more alcohol (longer runtime)
+      break;
+
+    case 4: // Drink 4. strong alcoholic drink
+      pumpTiming[2] = PUMP_TIME_ALCOHOL * 2;     // normal alcohol
+      pumpTiming[3] = PUMP_TIME_ALCOHOL_STRONG;  // additional strong alcohol
+      break;
+
+    default:
+      break;
+  }
+}
+
+
+static void timer_to_zero() {
   pumptimer = 0;
-  pumpTiming[0] = 0;
-  pumpTiming[1] = 0;
-  pumpTiming[2] = 0;
+  for (size_t i = 0; i < timeCounter; i++) {
+    pumpTiming[i] = 0;
+  }
+}
+
+static void emergencyStopAndReset() {
+  // Turn off all pumps
+  pump_off(PUMP_A);
+  pump_off(PUMP_B);
+  pump_off(PUMP_C);
+  pump_off(PUMP_D);
+
+  // Reset state machine
+  pumpingOption = 0;
+  counter = 0;
+  lastCounter = -1;
+  buttonFlag = false;
+
+  timer_to_zero();
+  allLEDsOff();
 }

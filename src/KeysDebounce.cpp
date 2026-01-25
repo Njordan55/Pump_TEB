@@ -1,7 +1,7 @@
 /**
  * @file KeysDebounce.cpp
  * @brief Implementation file for KeysDebounce class
- * @author Nkwamou Jordan
+ * @author Nkwamou Jordan ,Adrian Maurer
  * @date 25.10.2025
  */
 

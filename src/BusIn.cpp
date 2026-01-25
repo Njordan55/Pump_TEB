@@ -2,9 +2,10 @@
   BusIn.cpp - file for handling multiple
   digital input pins as a single bus.
   Created on: 23.10.2025
-  Author: Nkwamou Jordan
+  Author: Nkwamou Jordan, Adrian Maurer
+  @date 25.10.2025
   Released into the public domain.
-*/
+ */
 
 #include "BusIn.h"
 
