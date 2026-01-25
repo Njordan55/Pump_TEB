@@ -19,7 +19,6 @@
 #define PUMP_A 11
 #define PUMP_B 12
 #define PUMP_C 13
-#define PUMP_D 14
 
 // --- Buttons to define the drinks alcoholic degree ---
 #define BUTTON_OPT_1 6  // Drink 1. mixture selection button for non alcoholic drink

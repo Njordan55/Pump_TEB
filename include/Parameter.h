@@ -17,20 +17,22 @@
  // Basic Pump timing definitions (in milliseconds) for different liquids
 // LIQUID_A and etc and (...) are placeholders; replace with actual liquid names as needed
 // The Pumping times is adjusted according to the time needed to pump 100 ml of each liquid
+#define TIMER_FACTOR 2             // Factor to adjust timing if needed
 #define PUMP_TIME_ALCOHOL 500      // Pumping time for alcohol in milliseconds
-#define PUMP_TIME_LIQUID_A 1500    // Pumping time for (...) in milliseconds
-#define PUMP_TIME_LIQUID_B 2000    // Pumping time for (...) in milliseconds
-#define PUMP_TIME_ALCOHOL_STRONG 350 // Pumping time for strong alcohol in milliseconds
 
+#define PUMP_TIME_LIQUID_A 4000    // Pumping time for (...) in milliseconds
+#define PUMP_TIME_LIQUID_B 4000    // Pumping time for (...) in milliseconds
+// Pumping time for filling phase in milliseconds making sure the liquids reach the pumps
+#define PUMP_FILLING_TIME 1000 
 // LEDs pin array for easier management
 const uint8_t ledPin [] = { GREEN, YELLOW, BLUE, RED };
 const size_t ledPinCount = sizeof(ledPin) / sizeof(ledPin[0]);
 
 // Pumps pin array for easier management
-const uint8_t pumpPin[] = { PUMP_A, PUMP_B, PUMP_C, PUMP_D };
+const uint8_t pumpPin[] = { PUMP_A, PUMP_B, PUMP_C };
 const size_t pumpPinCount = sizeof(pumpPin) / sizeof(pumpPin[0]);
 uint8_t counter = 0;
-uint8_t lastCounter = -1;
+int8_t lastCounter = -1;
 
 //Switches/Buttons configuration, Debounce setup and Variables for button states
 //
@@ -57,8 +59,10 @@ uint8_t pumpingOption = 0; // 0 = no pumping, 1 = option 1, 2 = option 2, etc.
 // 0 = no alcohol, 1 = low, 2 = medium, 3 = high
 uint8_t factor = 0;
 // Timers for each drink type (0 = Alcohol, 1 = Liquid A, 2 = Liquid B)
-uint64_t pumpTiming[4] = {0, 0, 0, 0};
+uint64_t pumpTimeStarts[3] = {PUMP_FILLING_TIME, PUMP_FILLING_TIME, PUMP_FILLING_TIME};
+uint64_t pumpTiming[3] = {0, 0, 0};
 const size_t timeCounter = sizeof(pumpTiming) / sizeof(pumpTiming[0]);
+uint8_t n_o_pumps = 0;
 // Timing variables for pump timing control
 //
 uint64_t now = 0;
