@@ -2,10 +2,11 @@
  * @file Parameter.h
  * @brief Parameter Definitions Header
  * @remark Central definition of parameters used in the project
- * @author Nkwamou Jordan
+ * @author Nkwamou Jordan, Adrian Maurer
  * @date 23.10.2025
  */
 
+#include <Arduino.h>
 #include "Pins.h"
 #include "KeysDebounce.h"
 #include "BusIn.h"
@@ -16,16 +17,17 @@
  // Basic Pump timing definitions (in milliseconds) for different liquids
 // LIQUID_A and etc and (...) are placeholders; replace with actual liquid names as needed
 // The Pumping times is adjusted according to the time needed to pump 100 ml of each liquid
-#define PUMP_TIME_ALCOHOL 500 // Pumping time for alcohol in milliseconds
-#define PUMP_TIME_LIQUID_A 1500 // Pumping time for (...) in milliseconds
-#define PUMP_TIME_LIQUID_B 2000 // Pumping time for (...) in milliseconds
+#define PUMP_TIME_ALCOHOL 500      // Pumping time for alcohol in milliseconds
+#define PUMP_TIME_LIQUID_A 1500    // Pumping time for (...) in milliseconds
+#define PUMP_TIME_LIQUID_B 2000    // Pumping time for (...) in milliseconds
+#define PUMP_TIME_ALCOHOL_STRONG 350 // Pumping time for strong alcohol in milliseconds
 
 // LEDs pin array for easier management
 const uint8_t ledPin [] = { GREEN, YELLOW, BLUE, RED };
 const size_t ledPinCount = sizeof(ledPin) / sizeof(ledPin[0]);
 
 // Pumps pin array for easier management
-const uint8_t pumpPin [] = { PUMP_A, PUMP_B, PUMP_C };
+const uint8_t pumpPin[] = { PUMP_A, PUMP_B, PUMP_C, PUMP_D };
 const size_t pumpPinCount = sizeof(pumpPin) / sizeof(pumpPin[0]);
 uint8_t counter = 0;
 uint8_t lastCounter = -1;
@@ -55,7 +57,7 @@ uint8_t pumpingOption = 0; // 0 = no pumping, 1 = option 1, 2 = option 2, etc.
 // 0 = no alcohol, 1 = low, 2 = medium, 3 = high
 uint8_t factor = 0;
 // Timers for each drink type (0 = Alcohol, 1 = Liquid A, 2 = Liquid B)
-uint64_t pumpTiming[3] = {0, 0, 0};
+uint64_t pumpTiming[4] = {0, 0, 0, 0};
 const size_t timeCounter = sizeof(pumpTiming) / sizeof(pumpTiming[0]);
 // Timing variables for pump timing control
 //

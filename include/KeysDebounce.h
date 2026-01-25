@@ -3,6 +3,7 @@
  * @brief Header file for key debounce functionality
  * @details This class provides a debounce mechanism for key inputs,
  * ensuring that only stable key presses are registered.
+  * @author Nkwamou Jordan ,Adrian Maurer
  */
 
 #ifndef KEYS_DEBOUNCE_H

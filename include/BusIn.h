@@ -1,5 +1,7 @@
 /*
   BusIn.h - Library for handling multiple digital input pins as a single bus.
+  Created on: 23.10.2025
+  *@author Nkwamou Jordan, Adrian Maurer
  */
 
 #ifndef BUSIN_H
