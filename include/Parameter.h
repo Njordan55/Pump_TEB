@@ -17,13 +17,13 @@
  // Basic Pump timing definitions (in milliseconds) for different liquids
 // LIQUID_A and etc and (...) are placeholders; replace with actual liquid names as needed
 // The Pumping times is adjusted according to the time needed to pump 100 ml of each liquid
-#define TIMER_FACTOR 2             // Factor to adjust timing if needed
-#define PUMP_TIME_ALCOHOL 500      // Pumping time for alcohol in milliseconds
+#define TIMER_FACTOR 1             // Factor to adjust timing if needed
+#define PUMP_TIME_ALCOHOL 2000      // Pumping time for alcohol in milliseconds
 
-#define PUMP_TIME_LIQUID_A 4000    // Pumping time for (...) in milliseconds
-#define PUMP_TIME_LIQUID_B 4000    // Pumping time for (...) in milliseconds
+#define PUMP_TIME_LIQUID_A 8000    // Pumping time for (...) in milliseconds
+#define PUMP_TIME_LIQUID_B 8000    // Pumping time for (...) in milliseconds
 // Pumping time for filling phase in milliseconds making sure the liquids reach the pumps
-#define PUMP_FILLING_TIME 1000 
+#define PUMP_FILLING_TIME 5000 
 // LEDs pin array for easier management
 const uint8_t ledPin [] = { GREEN, YELLOW, BLUE, RED };
 const size_t ledPinCount = sizeof(ledPin) / sizeof(ledPin[0]);
